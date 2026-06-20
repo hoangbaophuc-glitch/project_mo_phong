@@ -41,7 +41,7 @@ unsigned long lastDHT = 0;
 unsigned long lastControl = 0;
 unsigned long lastFirebase = 0;
 unsigned long lastOled = 0;
-
+long nodeTime = 0; 
 const unsigned long DHT_TIME = 2000;
 const unsigned long CONTROL_TIME = 1500;
 const unsigned long FIREBASE_TIME = 1000;
@@ -104,6 +104,7 @@ void sendSensor() {
   http.addHeader("Content-Type", "application/json");
 
   // Đóng gói chuỗi JSON phẳng đẩy lên node sensor
+  // Đóng gói chuỗi JSON phẳng đẩy lên node sensor
   String data = "{";
   data += "\"temperature\":" + String(temp) + ",";
   data += "\"humidity\":" + String(hum) + ",";
@@ -113,8 +114,9 @@ void sendSensor() {
   data += "\"ledWhite\":" + String(ledWhiteControl) + ",";
   data += "\"gasLimit\":" + String(gasLimit) + ",";
   data += "\"tempLimit\":" + String(tempLimit) + ",";
-  data += "\"t1\":" + String(timeStr) + ",";               // Timestamp thực của thiết bị (t1)
-  data += "\"t2\":{\".sv\":\"timestamp\"}";                // Firebase tự động sinh timestamp (t2)
+  data += "\"t1\":" + String(timeStr) + ",";               
+  data += "\"t2\":{\".sv\":\"timestamp\"},";      // <--- BẠN PHẢI THÊM DẤU PHẨY (,) Ở CUỐI CHUỖI NÀY
+  data += "\"nodeTime\":" + String(nodeTime);
   data += "}";
 
   int code = http.PUT(data);
@@ -262,6 +264,9 @@ void setup() {
 }
 
 void loop() {
+  // 1. ĐÁNH DẤU MỐC BẮT ĐẦU VÒNG LẶP
+  unsigned long startNode = millis(); 
+
   unsigned long now = millis();
 
   updateSensor();
@@ -277,9 +282,13 @@ void loop() {
     readControl();
   }
 
+  // 2. CHỐT THỜI GIAN XỬ LÝ PHẦN CỨNG 
+  // (Đo trước khi gọi sendSensor vì lệnh HTTP PUT sẽ làm đứng mạch)
+  nodeTime = millis() - startNode;
+
   if (now - lastFirebase >= FIREBASE_TIME) {
     lastFirebase = now;
-    sendSensor();
+    sendSensor(); 
   }
 
   if (now - lastOled >= OLED_TIME) {
