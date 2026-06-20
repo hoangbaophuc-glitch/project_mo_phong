@@ -14,7 +14,7 @@ String firebaseURL = "https://smartparking-d39a7-default-rtdb.asia-southeast1.fi
 #define DHTPIN 12
 #define DHTTYPE DHT22
 #define MQ_AOUT 34
-#define LDR_AO 26
+#define LDR_AO 32   // FIX: đổi từ GPIO26 (ADC2, xung đột WiFi) sang GPIO32 (ADC1)
 #define LDR_DO 25
 #define OLED_SDA 18
 #define OLED_SCL 5
@@ -41,11 +41,25 @@ unsigned long lastDHT = 0;
 unsigned long lastControl = 0;
 unsigned long lastFirebase = 0;
 unsigned long lastOled = 0;
-long nodeTime = 0; 
+long nodeTime = 0;
+
+// ====== FIX: mốc thời gian đọc từng cảm biến (đơn vị micros, để tính latency theo ms) ======
+unsigned long gasReadMicros = 0;
+unsigned long lightReadMicros = 0;
+unsigned long dhtReadMicros = 0;
+
+// Latency từng cảm biến tính tại thời điểm đóng gói JSON (ms), để gửi kèm lên Firebase
+float gasLatencyMs = 0;
+float lightLatencyMs = 0;
+float dhtLatencyMs = 0;
+
 const unsigned long DHT_TIME = 2000;
 const unsigned long CONTROL_TIME = 1500;
 const unsigned long FIREBASE_TIME = 1000;
 const unsigned long OLED_TIME = 1000;
+
+// Offset giờ VN, chỉ dùng để hiển thị OLED/Serial, KHÔNG dùng khi tính t1 gửi server
+const long GMT_OFFSET_SEC_DISPLAY = 7 * 3600;
 
 void stepMotor(int steps, bool dir) {
   digitalWrite(DIR_PIN, dir);
@@ -92,18 +106,26 @@ void readControl() {
 void sendSensor() {
   if (WiFi.status() != WL_CONNECTED) return;
 
-  // Lấy thời gian thực của thiết bị (t1)
+  // ====== FIX: tính latency từng cảm biến NGAY TRƯỚC khi đóng gói JSON ======
+  // latency = thời điểm đóng gói - thời điểm đọc cảm biến đó (ms)
+  unsigned long packMicros = micros();
+  gasLatencyMs   = (packMicros - gasReadMicros)   / 1000.0;
+  lightLatencyMs = (packMicros - lightReadMicros) / 1000.0;
+  dhtLatencyMs   = (packMicros - dhtReadMicros)   / 1000.0;
+
+  // ====== FIX: t1 phải là UTC để cùng gốc thời gian với t2 (Firebase server timestamp) ======
   struct timeval tv;
   gettimeofday(&tv, NULL);
-  long long thoi_gian_gui_ms = (tv.tv_sec * 1000LL) + (tv.tv_usec / 1000);
-  char timeStr[20];
-  sprintf(timeStr, "%llu", thoi_gian_gui_ms); 
+  long long thoi_gian_local_ms = (tv.tv_sec * 1000LL) + (tv.tv_usec / 1000);
+  long long thoi_gian_gui_ms_utc = thoi_gian_local_ms - ((long long)GMT_OFFSET_SEC_DISPLAY * 1000LL);
+
+  char timeStr[24];
+  sprintf(timeStr, "%llu", (unsigned long long)thoi_gian_gui_ms_utc);
 
   HTTPClient http;
   http.begin(firebaseURL + "sensor.json");
   http.addHeader("Content-Type", "application/json");
 
-  // Đóng gói chuỗi JSON phẳng đẩy lên node sensor
   // Đóng gói chuỗi JSON phẳng đẩy lên node sensor
   String data = "{";
   data += "\"temperature\":" + String(temp) + ",";
@@ -114,9 +136,12 @@ void sendSensor() {
   data += "\"ledWhite\":" + String(ledWhiteControl) + ",";
   data += "\"gasLimit\":" + String(gasLimit) + ",";
   data += "\"tempLimit\":" + String(tempLimit) + ",";
-  data += "\"t1\":" + String(timeStr) + ",";               
-  data += "\"t2\":{\".sv\":\"timestamp\"},";      // <--- BẠN PHẢI THÊM DẤU PHẨY (,) Ở CUỐI CHUỖI NÀY
-  data += "\"nodeTime\":" + String(nodeTime);
+  data += "\"t1\":" + String(timeStr) + ",";
+  data += "\"t2\":{\".sv\":\"timestamp\"},";
+  data += "\"nodeTime\":" + String(nodeTime) + ",";
+  data += "\"gasLatencyMs\":" + String(gasLatencyMs, 2) + ",";
+  data += "\"lightLatencyMs\":" + String(lightLatencyMs, 2) + ",";
+  data += "\"dhtLatencyMs\":" + String(dhtLatencyMs, 2);
   data += "}";
 
   int code = http.PUT(data);
@@ -129,13 +154,18 @@ void sendSensor() {
 
 void updateSensor() {
   gasValue = analogRead(MQ_AOUT);
+  gasReadMicros = micros();          // FIX: chốt mốc thời gian ngay sau khi đọc xong gas
+
   lightValue = analogRead(LDR_AO);
+  lightReadMicros = micros();        // FIX: chốt mốc thời gian ngay sau khi đọc xong light
+
   lightDigital = digitalRead(LDR_DO);
 }
 
 void updateDHT() {
   float t = dht.readTemperature();
   float h = dht.readHumidity();
+  dhtReadMicros = micros();          // FIX: chốt mốc thời gian ngay sau khi đọc xong DHT
 
   if (!isnan(t) && !isnan(h)) {
     temp = t;
@@ -214,7 +244,13 @@ void printSerial() {
   Serial.print(" | Status: ");
   Serial.print(status);
   Serial.print(" | LED White: ");
-  Serial.println(ledWhiteControl);
+  Serial.print(ledWhiteControl);
+  Serial.print(" | GasLat(ms): ");
+  Serial.print(gasLatencyMs);
+  Serial.print(" | LightLat(ms): ");
+  Serial.print(lightLatencyMs);
+  Serial.print(" | DhtLat(ms): ");
+  Serial.println(dhtLatencyMs);
 }
 
 void setup() {
@@ -244,15 +280,15 @@ void setup() {
     Serial.print(".");
   }
 
-  // --- CẤU HÌNH ĐỒNG BỘ THỜI GIAN NTP (GMT+7) ---
-  configTime(7 * 3600, 0, "pool.ntp.org", "time.nist.gov");
-  Serial.print("\nĐang dong bo thoi gian NTP");
+  // configTime vẫn dùng để hiển thị giờ VN trên OLED/Serial nếu cần;
+  // sendSensor() đã tự trừ lại offset này để đưa t1 về đúng UTC.
+  configTime(GMT_OFFSET_SEC_DISPLAY, 0, "pool.ntp.org", "time.nist.gov");
+  Serial.print("\nDang dong bo thoi gian NTP");
   while (time(nullptr) < 100000) {
     delay(500);
     Serial.print(".");
   }
   Serial.println("\nDong bo thoi gian thanh cong!");
-  // ----------------------------------------------
 
   oled.clear();
   oled.println("SMART FIRE");
@@ -264,8 +300,7 @@ void setup() {
 }
 
 void loop() {
-  // 1. ĐÁNH DẤU MỐC BẮT ĐẦU VÒNG LẶP
-  unsigned long startNode = millis(); 
+  unsigned long startNode = millis();
 
   unsigned long now = millis();
 
@@ -277,18 +312,21 @@ void loop() {
     updateDHT();
   }
 
-  if (now - lastControl >= CONTROL_TIME) {
-    lastControl = now;
-    readControl();
-  }
-
-  // 2. CHỐT THỜI GIAN XỬ LÝ PHẦN CỨNG 
-  // (Đo trước khi gọi sendSensor vì lệnh HTTP PUT sẽ làm đứng mạch)
+  // FIX: chốt nodeTime và gửi sensor NGAY SAU khi đọc cảm biến,
+  // TRƯỚC khi gọi readControl() — vì readControl() là HTTP GET (blocking),
+  // nếu đặt trước sendSensor() nó sẽ làm "phình" sai latency của mọi cảm biến.
   nodeTime = millis() - startNode;
 
   if (now - lastFirebase >= FIREBASE_TIME) {
     lastFirebase = now;
-    sendSensor(); 
+    sendSensor();
+  }
+
+  // readControl() (HTTP GET, có thể block vài giây nếu mạng chậm) chạy SAU CÙNG,
+  // không còn nằm giữa lúc đọc cảm biến và lúc đóng gói/gửi JSON nữa.
+  if (now - lastControl >= CONTROL_TIME) {
+    lastControl = now;
+    readControl();
   }
 
   if (now - lastOled >= OLED_TIME) {
