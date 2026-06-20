@@ -1,0 +1,464 @@
+/* =========================================================
+   IoT Dashboard — Giám sát môi trường
+   Theme tối/sáng, thẻ cảm biến, gauge, biểu đồ realtime
+   ========================================================= */
+
+/* ---------- Biến dùng chung ---------- */
+:root {
+  --radius: 18px;
+  --radius-sm: 12px;
+  --ok: #22c55e;
+  --warn: #f59e0b;
+  --danger: #ef4444;
+  --shadow: 0 18px 40px -22px rgba(0, 0, 0, 0.65);
+  --trans: 240ms ease;
+}
+
+/* ---------- Màu cho theme TỐI ---------- */
+body[data-theme="dark"] {
+  --bg: #0b1020;
+  --surface: rgba(255, 255, 255, 0.045);
+  --surface-2: rgba(255, 255, 255, 0.07);
+  --border: rgba(255, 255, 255, 0.09);
+  --text: #eef2ff;
+  --muted: #93a0c0;
+  --grid: rgba(255, 255, 255, 0.06);
+}
+
+/* ---------- Màu cho theme SÁNG ---------- */
+body[data-theme="light"] {
+  --bg: #eef2f9;
+  --surface: #ffffff;
+  --surface-2: #f4f7fc;
+  --border: rgba(15, 30, 70, 0.10);
+  --text: #11203f;
+  --muted: #5c6b8a;
+  --grid: rgba(15, 30, 70, 0.08);
+  --shadow: 0 18px 40px -24px rgba(20, 40, 90, 0.35);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: "Inter", Arial, sans-serif;
+  color: var(--text);
+  background-color: var(--bg);
+  min-height: 100vh;
+  transition: background-color var(--trans), color var(--trans);
+}
+
+/* =========================================================
+   HEADER
+   ========================================================= */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 32px;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background-color: var(--bg);
+  border-bottom: 1px solid var(--border);
+}
+
+.brand { display: flex; align-items: center; gap: 14px; }
+.brand-logo {
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  color: #fff;
+  background: linear-gradient(135deg, #4f7cff, #22d3ee);
+}
+.brand-logo svg { width: 26px; height: 26px; }
+.brand-text h1 { margin: 0; font-size: 20px; font-weight: 800; }
+.brand-text p { margin: 2px 0 0; font-size: 12.5px; color: var(--muted); }
+
+.topbar-actions { display: flex; align-items: center; gap: 12px; }
+
+/* Pill trạng thái kết nối */
+.conn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 14px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  border: 1px solid var(--border);
+  background-color: var(--surface);
+}
+.conn-dot { width: 9px; height: 9px; border-radius: 50%; background-color: var(--muted); }
+.conn[data-state="online"] .conn-dot { background-color: var(--ok); }
+.conn[data-state="demo"] .conn-dot { background-color: var(--warn); }
+.conn[data-state="offline"] .conn-dot { background-color: var(--danger); }
+
+.icon-btn {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background-color: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  transition: background-color var(--trans);
+}
+.icon-btn:hover { background-color: var(--surface-2); }
+.icon-btn svg { width: 20px; height: 20px; }
+body[data-theme="dark"] .ico-sun { display: none; }
+body[data-theme="light"] .ico-moon { display: none; }
+
+/* =========================================================
+   BANNER CẢNH BÁO
+   ========================================================= */
+.alert-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 16px 32px 0;
+  padding: 14px 18px;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  color: #fff;
+  background: linear-gradient(100deg, #ef4444, #f97316);
+}
+.alert-banner svg { width: 22px; height: 22px; flex: none; }
+
+/* =========================================================
+   BỐ CỤC
+   ========================================================= */
+.wrap {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 26px 32px 40px;
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 18px;
+  margin-bottom: 22px;
+}
+
+/* =========================================================
+   THẺ CẢM BIẾN
+   ========================================================= */
+.card {
+  position: relative;
+  overflow: hidden;
+  padding: 20px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background-color: var(--surface);
+  box-shadow: var(--shadow);
+  transition: transform var(--trans), background-color var(--trans);
+}
+.card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background-color: var(--accent);
+}
+.card:hover { transform: translateY(-4px); background-color: var(--surface-2); }
+
+/* Màu riêng cho từng loại cảm biến */
+.card.temp  { --accent: #fb7185; --accent-bg: rgba(251, 113, 133, 0.16); }
+.card.humid { --accent: #38bdf8; --accent-bg: rgba(56, 189, 248, 0.16); }
+.card.light { --accent: #fbbf24; --accent-bg: rgba(251, 191, 36, 0.16); }
+.card.gas   { --accent: #a78bfa; --accent-bg: rgba(167, 139, 250, 0.16); }
+.card.dust  { --accent: #34d399; --accent-bg: rgba(52, 211, 153, 0.16); }
+
+.card-top { display: flex; align-items: center; justify-content: space-between; }
+.card-icon {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 13px;
+  color: var(--accent);
+  background-color: var(--accent-bg);
+}
+.card-icon svg { width: 24px; height: 24px; }
+
+/* Badge trạng thái */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 11px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+}
+.badge::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background-color: currentColor; }
+.badge.ok     { color: #22c55e; background-color: rgba(34, 197, 94, 0.15); }
+.badge.warn   { color: #f59e0b; background-color: rgba(245, 158, 11, 0.18); }
+.badge.danger { color: #ef4444; background-color: rgba(239, 68, 68, 0.16); }
+
+.card-label { margin: 16px 0 4px; font-size: 13.5px; color: var(--muted); font-weight: 500; }
+.card-value { display: flex; align-items: baseline; gap: 6px; }
+.card-value .num { font-size: 38px; font-weight: 800; line-height: 1; }
+.card-value .unit { font-size: 15px; color: var(--muted); font-weight: 600; }
+
+/* Thanh gauge dưới mỗi thẻ */
+.gauge {
+  margin-top: 16px;
+  height: 7px;
+  border-radius: 999px;
+  background-color: var(--grid);
+  overflow: hidden;
+}
+.gauge-fill {
+  height: 100%;
+  width: 0%;
+  border-radius: 999px;
+  background-color: var(--accent);
+  transition: width 700ms ease, background-color var(--trans);
+}
+.card-meta { display: flex; justify-content: space-between; margin-top: 8px; font-size: 11px; color: var(--muted); }
+.card-trend { display: inline-flex; align-items: center; gap: 3px; }
+.card-trend svg { width: 13px; height: 13px; }
+.card-trend.up { color: #ef4444; }
+.card-trend.down { color: #22c55e; }
+
+/* =========================================================
+   PANEL (biểu đồ + bảng)
+   ========================================================= */
+.grid-2 { display: grid; grid-template-columns: 1.4fr 1fr; gap: 18px; }
+@media (max-width: 920px) {
+  .grid-2 { grid-template-columns: 1fr; }
+}
+
+.panel {
+  padding: 20px 22px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background-color: var(--surface);
+  box-shadow: var(--shadow);
+}
+.panel-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.panel-head h2 { margin: 0; font-size: 16px; font-weight: 700; }
+.muted { color: var(--muted); font-size: 12.5px; }
+
+.chart-box { position: relative; height: 320px; }
+
+.chart-legend { display: flex; gap: 16px; font-size: 12.5px; color: var(--muted); }
+.chart-legend .lg { display: inline-flex; align-items: center; gap: 6px; }
+.chart-legend .lg::before { content: ""; width: 12px; height: 4px; border-radius: 2px; background-color: var(--c); }
+
+/* =========================================================
+   BẢNG
+   ========================================================= */
+.table-wrap { overflow-x: auto; }
+.data-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.data-table th {
+  text-align: left;
+  padding: 10px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--muted);
+  border-bottom: 1px solid var(--border);
+}
+.data-table td { padding: 13px 12px; border-bottom: 1px solid var(--border); }
+.data-table tr:last-child td { border-bottom: none; }
+.data-table tbody tr:hover { background-color: var(--surface-2); }
+.t-name { display: flex; align-items: center; gap: 10px; font-weight: 600; }
+.t-name .dot { width: 9px; height: 9px; border-radius: 50%; background-color: #22c55e; }
+.t-value { font-weight: 700; }
+.t-value .unit { color: var(--muted); font-weight: 500; font-size: 12.5px; margin-left: 3px; }
+
+/* =========================================================
+   FOOTER + CÔNG TẮC
+   ========================================================= */
+.foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 18px 32px 30px;
+  font-size: 12.5px;
+  color: var(--muted);
+  border-top: 1px solid var(--border);
+}
+
+.switch { display: inline-flex; align-items: center; gap: 9px; cursor: pointer; }
+.switch input { display: none; }
+.switch-track {
+  width: 42px;
+  height: 24px;
+  border-radius: 999px;
+  background-color: var(--grid);
+  border: 1px solid var(--border);
+  position: relative;
+  transition: background-color var(--trans);
+}
+.switch-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background-color: var(--muted);
+  transition: left var(--trans), background-color var(--trans);
+}
+.switch input:checked + .switch-track { background-color: rgba(79, 124, 255, 0.35); border-color: #4f7cff; }
+.switch input:checked + .switch-track .switch-thumb { left: 21px; background-color: #4f7cff; }
+.switch-text { font-size: 13px; font-weight: 600; color: var(--text); }
+
+/* Hiệu ứng nhấp nháy khi số thay đổi */
+.flash { animation: flash 600ms ease; }
+@keyframes flash {
+  0% { color: #4f7cff; }
+  100% { color: inherit; }
+}
+
+/* =========================================================
+   ĐIỀU CHỈNH NGƯỠNG CẢNH BÁO
+   ========================================================= */
+.control-panel { margin-bottom: 22px; }
+.control-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(180px, 1fr)) auto;
+  gap: 14px;
+  align-items: end;
+}
+.control-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+}
+.control-field input {
+  width: 100%;
+  padding: 12px 13px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  outline: none;
+  background-color: var(--surface-2);
+  color: var(--text);
+  font-size: 15px;
+  font-weight: 700;
+}
+.control-field input:focus {
+  border-color: #4f7cff;
+  box-shadow: 0 0 0 3px rgba(79, 124, 255, 0.16);
+}
+.control-field small {
+  color: var(--muted);
+  font-weight: 500;
+}
+.save-btn {
+  height: 45px;
+  padding: 0 18px;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #4f7cff, #22d3ee);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.save-btn:hover { filter: brightness(1.08); }
+.control-message {
+  margin: 14px 0 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+.control-message.success { color: var(--ok); font-weight: 700; }
+.control-message.error { color: var(--danger); font-weight: 700; }
+@media (max-width: 760px) {
+  .control-grid { grid-template-columns: 1fr; }
+  .save-btn { width: 100%; }
+}
+
+
+/* =========================================================
+   ĐIỀU KHIỂN LED TRẮNG
+   ========================================================= */
+.led-panel { margin-bottom: 22px; }
+.led-control-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+.led-control-info {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.led-title {
+  font-size: 15px;
+  font-weight: 800;
+}
+.led-control-info small {
+  color: var(--muted);
+  font-weight: 500;
+}
+.big-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  user-select: none;
+}
+.big-switch input { display: none; }
+.big-switch-track {
+  width: 70px;
+  height: 38px;
+  border-radius: 999px;
+  background-color: var(--grid);
+  border: 1px solid var(--border);
+  position: relative;
+  transition: background-color var(--trans), border-color var(--trans);
+}
+.big-switch-thumb {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background-color: var(--muted);
+  transition: left var(--trans), background-color var(--trans);
+}
+.big-switch input:checked + .big-switch-track {
+  background-color: rgba(251, 191, 36, 0.35);
+  border-color: #fbbf24;
+}
+.big-switch input:checked + .big-switch-track .big-switch-thumb {
+  left: 36px;
+  background-color: #fbbf24;
+}
+.big-switch-text {
+  font-size: 14px;
+  font-weight: 800;
+}
+
+/* Cảnh báo riêng trên từng ô cảm biến */
+.card.card-warn {
+  border-color: rgba(245, 158, 11, 0.75);
+  box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.25), var(--shadow);
+}
+
+.card.card-danger {
+  border-color: rgba(239, 68, 68, 0.8);
+  box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.28), var(--shadow);
+}

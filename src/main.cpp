@@ -92,18 +92,18 @@ void readControl() {
 void sendSensor() {
   if (WiFi.status() != WL_CONNECTED) return;
 
-  // --- LẤY THỜI GIAN THỰC ĐỂ TÍNH LATENCY ---
+  // Lấy thời gian thực của thiết bị (t1)
   struct timeval tv;
   gettimeofday(&tv, NULL);
   long long thoi_gian_gui_ms = (tv.tv_sec * 1000LL) + (tv.tv_usec / 1000);
   char timeStr[20];
-  sprintf(timeStr, "%llu", thoi_gian_gui_ms); // Chuyển số quá lớn thành chuỗi an toàn
-  // -----------------------------------------
+  sprintf(timeStr, "%llu", thoi_gian_gui_ms); 
 
   HTTPClient http;
   http.begin(firebaseURL + "sensor.json");
   http.addHeader("Content-Type", "application/json");
 
+  // Đóng gói chuỗi JSON phẳng đẩy lên node sensor
   String data = "{";
   data += "\"temperature\":" + String(temp) + ",";
   data += "\"humidity\":" + String(hum) + ",";
@@ -112,13 +112,14 @@ void sendSensor() {
   data += "\"status\":\"" + status + "\",";
   data += "\"ledWhite\":" + String(ledWhiteControl) + ",";
   data += "\"gasLimit\":" + String(gasLimit) + ",";
-  data += "\"tempLimit\":" + String(tempLimit) + ","; // Lưu ý đã thêm dấu phẩy ở cuối dòng này
-  data += "\"timestamp\":" + String(timeStr);         // <--- CHÈN BIẾN TIMESTAMP VÀO ĐÂY
+  data += "\"tempLimit\":" + String(tempLimit) + ",";
+  data += "\"t1\":" + String(timeStr) + ",";               // Timestamp thực của thiết bị (t1)
+  data += "\"t2\":{\".sv\":\"timestamp\"}";                // Firebase tự động sinh timestamp (t2)
   data += "}";
 
   int code = http.PUT(data);
 
-  Serial.print("Firebase: ");
+  Serial.print("Firebase Code: ");
   Serial.println(code);
 
   http.end();
