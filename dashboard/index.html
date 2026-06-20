@@ -9,7 +9,6 @@
 </head>
 <body data-theme="dark">
 
-  <!-- ===================== HEADER ===================== -->
   <header class="topbar">
     <div class="brand">
       <span class="brand-logo">
@@ -35,16 +34,10 @@
     </div>
   </header>
 
-  <!-- ===================== BANNER CẢNH BÁO (ẩn lúc đầu) ===================== -->
-  <!-- Banner cảnh báo chung đã được loại bỏ.
-       Cảnh báo bây giờ chỉ hiển thị riêng trên từng ô cảm biến. -->
-
   <main class="wrap">
 
-    <!-- ===================== CÁC THẺ CẢM BIẾN ===================== -->
     <section class="cards">
 
-      <!-- Thẻ Nhiệt độ -->
       <article class="card temp">
         <div class="card-top">
           <span class="card-icon">
@@ -58,7 +51,6 @@
         <div class="card-meta"><span>0 – 50 °C</span><span class="card-trend" id="trend_nhietDo"></span></div>
       </article>
 
-      <!-- Thẻ Độ ẩm -->
       <article class="card humid">
         <div class="card-top">
           <span class="card-icon">
@@ -72,7 +64,6 @@
         <div class="card-meta"><span>0 – 100 %</span><span class="card-trend" id="trend_doAm"></span></div>
       </article>
 
-      <!-- Thẻ Ánh sáng -->
       <article class="card light">
         <div class="card-top">
           <span class="card-icon">
@@ -86,7 +77,6 @@
         <div class="card-meta"><span>0 – 1000 lux</span><span class="card-trend" id="trend_anhSang"></span></div>
       </article>
 
-      <!-- Thẻ Khí gas -->
       <article class="card gas">
         <div class="card-top">
           <span class="card-icon">
@@ -102,8 +92,6 @@
 
     </section>
 
-
-    <!-- ===================== ĐIỀU CHỈNH NGƯỠNG CẢNH BÁO ===================== -->
     <section class="panel control-panel">
       <div class="panel-head">
         <h2>Điều chỉnh ngưỡng cảnh báo</h2>
@@ -129,8 +117,6 @@
       <p class="control-message" id="controlMessage">Nhập ngưỡng mới rồi bấm cập nhật.</p>
     </section>
 
-
-    <!-- ===================== ĐIỀU KHIỂN LED TRẮNG ===================== -->
     <section class="panel led-panel">
       <div class="panel-head">
         <h2>Điều khiển LED trắng</h2>
@@ -154,7 +140,32 @@
       <p class="control-message" id="ledControlMessage">Công tắc này không tắt chế độ tự động theo ánh sáng.</p>
     </section>
 
-    <!-- ===================== BIỂU ĐỒ + BẢNG ===================== -->
+    <section class="panel">
+      <div class="panel-head">
+        <h2>⏱️ Phân tích Độ trễ Hệ thống (System Latency)</h2>
+        <span class="muted">Đo lường thời gian xử lý tại Edge Node và tốc độ truyền tải mạng</span>
+      </div>
+      
+      <div style="display: flex; flex-wrap: wrap; gap: 20px; justify-content: space-between; margin-top: 10px;">
+        <div style="flex: 1; min-width: 250px;">
+          <p style="margin-bottom: 8px; font-weight: 500;">Tổng thời gian ESP32 xử lý: <span id="node-time" style="font-weight: bold; color: #f59e0b;">-- ms</span></p>
+          <ul style="margin-top: 0; padding-left: 20px; line-height: 1.8; color: var(--text-muted, #94a3b8);">
+            <li>Độ trễ đọc MQ-2 (Gas): <span id="gas-lat" style="font-weight: bold;">-- ms</span></li>
+            <li>Độ trễ đọc Quang trở: <span id="light-lat" style="font-weight: bold;">-- ms</span></li>
+            <li>Độ trễ đọc DHT22: <span id="dht-lat" style="font-weight: bold;">-- ms</span></li>
+          </ul>
+        </div>
+        
+        <div style="flex: 1; min-width: 250px;">
+          <p style="margin-bottom: 8px; font-weight: 500;">Timestamp Thiết bị (t1): <span id="time-t1" style="font-weight: bold; color: var(--text-muted, #94a3b8);">--</span></p>
+          <p style="margin-bottom: 8px; font-weight: 500;">Timestamp Firebase (t2): <span id="time-t2" style="font-weight: bold; color: var(--text-muted, #94a3b8);">--</span></p>
+          <div style="margin-top: 15px; padding: 10px; border-radius: 6px; background: rgba(34, 197, 94, 0.1); border-left: 4px solid #22c55e;">
+            <p style="margin: 0; font-size: 15px; font-weight: 600;">Thời gian tải lên Cloud (t2 - t1): <span id="processing-time" style="color: #22c55e; font-size: 18px;">-- ms</span></p>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <div class="grid-2">
 
       <section class="panel">
@@ -214,7 +225,6 @@
     </div>
   </main>
 
-  <!-- ===================== FOOTER ===================== -->
   <footer class="foot">
     <span>IoT Environment Monitor — Firebase Realtime Database</span>
     <label class="switch" title="Bật/tắt dữ liệu mô phỏng">
@@ -224,7 +234,6 @@
     </label>
   </footer>
 
-  <!-- ===================== THƯ VIỆN ===================== -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>

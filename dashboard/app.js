@@ -113,8 +113,6 @@ function capNhat(nhietDo, doAm, anhSang, khiGas, statusTuESP32) {
   var tempWarn = tempLimit * 0.8;
   var gasWarn = gasLimit * 0.8;
 
-  // Chỉ cảnh báo riêng trên từng ô theo ngưỡng đặt từ Firebase.
-  // Không dùng banner cảnh báo chung phía trên.
   hienThi("nhietDo", "Nhiệt độ", nhietDo, 80, tempWarn, tempLimit);
   hienThi("doAm", "Độ ẩm", doAm, 100, -1, -1);
   hienThi("anhSang", "Ánh sáng", anhSang, 4095, -1, -1);
@@ -223,16 +221,59 @@ function chayFirebase() {
     datKetNoi(snap.val() === true ? "online" : "offline", snap.val() === true ? "Trực tuyến" : "Mất kết nối");
   });
 
-  // Đọc dữ liệu cảm biến đúng với code ESP32 của bạn: sensor.json
+  // Đọc dữ liệu cảm biến
   firebaseRef = db.ref("sensor");
   firebaseRef.on("value", function (snap) {
     var data = snap.val();
     if (!data) return;
 
+    // 1. Cập nhật giao diện cảm biến
     capNhat(data.temperature, data.humidity, data.light, data.gas, data.status);
+
+    // 2. Cập nhật các thông số độ trễ biên (Edge Latency)
+    if (data.nodeTime !== undefined) {
+      var nodeT = document.getElementById("node-time");
+      if (nodeT) nodeT.textContent = data.nodeTime + " ms";
+    }
+    if (data.gasLatencyMs !== undefined) {
+      var gasL = document.getElementById("gas-lat");
+      if (gasL) gasL.textContent = data.gasLatencyMs + " ms";
+    }
+    if (data.lightLatencyMs !== undefined) {
+      var lightL = document.getElementById("light-lat");
+      if (lightL) lightL.textContent = data.lightLatencyMs + " ms";
+    }
+    if (data.dhtLatencyMs !== undefined) {
+      var dhtL = document.getElementById("dht-lat");
+      if (dhtL) dhtL.textContent = data.dhtLatencyMs + " ms";
+    }
+
+    // 3. Tính toán độ trễ mạng (Uplink Latency)
+    if (data.t1 && data.t2) {
+      var timeT1 = document.getElementById("time-t1");
+      var timeT2 = document.getElementById("time-t2");
+      var procTime = document.getElementById("processing-time");
+
+      if (timeT1) timeT1.textContent = data.t1;
+      if (timeT2) timeT2.textContent = data.t2;
+      
+      if (procTime) {
+        var latency = data.t2 - data.t1;
+        procTime.textContent = latency + " ms";
+        
+        // Đổi màu cảnh báo chất lượng mạng
+        if (latency < 500) {
+          procTime.style.color = "#2e7d32"; // Xanh: Tuyệt vời
+        } else if (latency < 1500) {
+          procTime.style.color = "#f57f17"; // Vàng: Chấp nhận được
+        } else {
+          procTime.style.color = "#c62828"; // Đỏ: Mạng nghẽn
+        }
+      }
+    }
   });
 
-  // Đọc ngưỡng điều khiển từ Firebase: control/gasLimit và control/tempLimit
+  // Đọc ngưỡng điều khiển từ Firebase
   controlRef = db.ref("control");
   controlRef.on("value", function (snap) {
     var data = snap.val() || {};
