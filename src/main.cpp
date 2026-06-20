@@ -106,27 +106,27 @@ void readControl() {
 void sendSensor() {
   if (WiFi.status() != WL_CONNECTED) return;
 
-  // ====== FIX: tính latency từng cảm biến NGAY TRƯỚC khi đóng gói JSON ======
-  // latency = thời điểm đóng gói - thời điểm đọc cảm biến đó (ms)
+  // Tính latency từng cảm biến
   unsigned long packMicros = micros();
   gasLatencyMs   = (packMicros - gasReadMicros)   / 1000.0;
   lightLatencyMs = (packMicros - lightReadMicros) / 1000.0;
   dhtLatencyMs   = (packMicros - dhtReadMicros)   / 1000.0;
 
-  // ====== FIX: t1 phải là UTC để cùng gốc thời gian với t2 (Firebase server timestamp) ======
+  // ====== BẢN SỬA LỖI: Chỉ cần lấy trực tiếp UTC Epoch Time ======
   struct timeval tv;
   gettimeofday(&tv, NULL);
-  long long thoi_gian_local_ms = (tv.tv_sec * 1000LL) + (tv.tv_usec / 1000);
-  long long thoi_gian_gui_ms_utc = thoi_gian_local_ms - ((long long)GMT_OFFSET_SEC_DISPLAY * 1000LL);
+  // gettimeofday() tự động trả về UTC, không cần trừ đi múi giờ (GMT+7) nữa
+  long long thoi_gian_gui_ms_utc = (tv.tv_sec * 1000LL) + (tv.tv_usec / 1000);
 
   char timeStr[24];
   sprintf(timeStr, "%llu", (unsigned long long)thoi_gian_gui_ms_utc);
+  // ===============================================================
 
   HTTPClient http;
   http.begin(firebaseURL + "sensor.json");
   http.addHeader("Content-Type", "application/json");
 
-  // Đóng gói chuỗi JSON phẳng đẩy lên node sensor
+  // Đóng gói chuỗi JSON
   String data = "{";
   data += "\"temperature\":" + String(temp) + ",";
   data += "\"humidity\":" + String(hum) + ",";
