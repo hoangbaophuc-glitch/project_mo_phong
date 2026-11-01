@@ -1,10 +1,7 @@
-// =========================================================
 // IoT Dashboard - Firebase Realtime Database
-// Đọc dữ liệu từ node: sensor
-// Ghi điều khiển vào node: control/gasLimit, control/tempLimit và control/ledWhite
-// =========================================================
 
-// ---------- 1) CẤU HÌNH FIREBASE ----------
+
+// CẤU HÌNH FIREBASE
 var cauHinhFirebase = {
   apiKey: "",
   authDomain: "",
@@ -15,7 +12,7 @@ var cauHinhFirebase = {
   appId: ""
 };
 
-// ---------- 2) BIẾN TOÀN CỤC ----------
+
 var giaTriTruoc = {};
 var bieuDo;
 var demoTimer = null;
@@ -29,12 +26,13 @@ var ledWhiteControl = 0;
 var MUI_TEN_LEN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M17 7H9M17 7v8"/></svg>';
 var MUI_TEN_XUONG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7l10 10M17 17H9M17 17V9"/></svg>';
 
+
 function laySo(value, fallback) {
   var n = Number(value);
   return isNaN(n) ? fallback : n;
 }
 
-// ---------- 3) HÀM HIỂN THỊ 1 CẢM BIẾN ----------
+
 function hienThi(ten, nhan, giaTri, max, nguong1, nguong2) {
   giaTri = laySo(giaTri, 0);
   var so = Math.round(giaTri * 10) / 10;
@@ -83,10 +81,12 @@ function hienThi(ten, nhan, giaTri, max, nguong1, nguong2) {
   tbadge.className = "badge " + loai;
   document.getElementById("tdot_" + ten).style.backgroundColor = mau;
 
+
   hienXuHuong(ten, giaTri);
   giaTriTruoc[ten] = giaTri;
   return { loai: loai, nhan: nhan };
 }
+
 
 function hienXuHuong(ten, giaTri) {
   var oTrend = document.getElementById("trend_" + ten);
@@ -103,7 +103,7 @@ function hienXuHuong(ten, giaTri) {
   }
 }
 
-// ---------- 4) CẬP NHẬT TẤT CẢ ----------
+
 function capNhat(nhietDo, doAm, anhSang, khiGas, statusTuESP32) {
   nhietDo = laySo(nhietDo, 0);
   doAm = laySo(doAm, 0);
@@ -134,7 +134,7 @@ function capNhatCanhBao() {
   if (banner) banner.hidden = true;
 }
 
-// ---------- 5) BIỂU ĐỒ ----------
+
 function taoBieuDo() {
   var khung = document.getElementById("bieuDo");
   bieuDo = new Chart(khung, {
@@ -159,6 +159,7 @@ function taoBieuDo() {
   });
 }
 
+
 function themVaoBieuDo(nhietDo, doAm, khiGas) {
   var gio = new Date().toLocaleTimeString("vi-VN");
   bieuDo.data.labels.push(gio);
@@ -175,15 +176,17 @@ function themVaoBieuDo(nhietDo, doAm, khiGas) {
   bieuDo.update();
 }
 
+
 function datKetNoi(trangThai, chu) {
   document.getElementById("connPill").setAttribute("data-state", trangThai);
   document.getElementById("connLabel").textContent = chu;
 }
 
-// ---------- 6) DEMO ----------
+
 function soNgauNhien(min, max) {
   return Math.round(Math.random() * (max - min) + min);
 }
+
 
 function batDemo() {
   tatFirebase();
@@ -207,7 +210,7 @@ function tatDemo() {
   document.getElementById("demoToggle").checked = false;
 }
 
-// ---------- 7) FIREBASE ----------
+
 function chayFirebase() {
   tatDemo();
 
@@ -221,16 +224,16 @@ function chayFirebase() {
     datKetNoi(snap.val() === true ? "online" : "offline", snap.val() === true ? "Trực tuyến" : "Mất kết nối");
   });
 
-  // Đọc dữ liệu cảm biến
+
   firebaseRef = db.ref("sensor");
   firebaseRef.on("value", function (snap) {
     var data = snap.val();
     if (!data) return;
 
-    // 1. Cập nhật giao diện cảm biến
+
     capNhat(data.temperature, data.humidity, data.light, data.gas, data.status);
 
-    // 2. Cập nhật các thông số độ trễ biên (Edge Latency)
+
     if (data.nodeTime !== undefined) {
       var nodeT = document.getElementById("node-time");
       if (nodeT) nodeT.textContent = data.nodeTime + " ms";
@@ -248,7 +251,7 @@ function chayFirebase() {
       if (dhtL) dhtL.textContent = data.dhtLatencyMs + " ms";
     }
 
-    // 3. Tính toán độ trễ mạng (Uplink Latency)
+
     if (data.t1 && data.t2) {
       var timeT1 = document.getElementById("time-t1");
       var timeT2 = document.getElementById("time-t2");
@@ -261,13 +264,13 @@ function chayFirebase() {
         var latency = data.t2 - data.t1;
         procTime.textContent = latency + " ms";
         
-        // Đổi màu cảnh báo chất lượng mạng
+
         if (latency < 500) {
-          procTime.style.color = "#2e7d32"; // Xanh: Tuyệt vời
+          procTime.style.color = "#2e7d32";
         } else if (latency < 1500) {
-          procTime.style.color = "#f57f17"; // Vàng: Chấp nhận được
+          procTime.style.color = "#f57f17";
         } else {
-          procTime.style.color = "#c62828"; // Đỏ: Mạng nghẽn
+          procTime.style.color = "#c62828";
         }
       }
     }
@@ -296,6 +299,7 @@ function chayFirebase() {
   });
 }
 
+
 function tatFirebase() {
   if (firebaseRef !== null) {
     firebaseRef.off();
@@ -306,6 +310,7 @@ function tatFirebase() {
     controlRef = null;
   }
 }
+
 
 function luuLedTrang() {
   var msg = document.getElementById("ledControlMessage");
@@ -331,6 +336,7 @@ function luuLedTrang() {
     ledSwitch.checked = ledWhiteControl === 1;
   });
 }
+
 
 function luuNguong() {
   var gasMoi = Number(document.getElementById("gasLimitInput").value);
@@ -367,7 +373,7 @@ function luuNguong() {
   });
 }
 
-// ---------- 8) THEME + KHỞI ĐỘNG ----------
+
 function doiTheme() {
   var hienTai = document.body.getAttribute("data-theme");
   var moi = hienTai === "dark" ? "light" : "dark";

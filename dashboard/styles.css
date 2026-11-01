@@ -1,9 +1,6 @@
-/* =========================================================
-   IoT Dashboard — Giám sát môi trường
-   Theme tối/sáng, thẻ cảm biến, gauge, biểu đồ realtime
-   ========================================================= */
+/* IoT Dashboard — Giám sát môi trường */
 
-/* ---------- Biến dùng chung ---------- */
+
 :root {
   --radius: 18px;
   --radius-sm: 12px;
@@ -14,7 +11,7 @@
   --trans: 240ms ease;
 }
 
-/* ---------- Màu cho theme TỐI ---------- */
+
 body[data-theme="dark"] {
   --bg: #0b1020;
   --surface: rgba(255, 255, 255, 0.045);
@@ -25,7 +22,7 @@ body[data-theme="dark"] {
   --grid: rgba(255, 255, 255, 0.06);
 }
 
-/* ---------- Màu cho theme SÁNG ---------- */
+
 body[data-theme="light"] {
   --bg: #eef2f9;
   --surface: #ffffff;
@@ -48,9 +45,7 @@ body {
   transition: background-color var(--trans), color var(--trans);
 }
 
-/* =========================================================
-   HEADER
-   ========================================================= */
+/* HEADER */
 .topbar {
   display: flex;
   align-items: center;
@@ -80,7 +75,7 @@ body {
 
 .topbar-actions { display: flex; align-items: center; gap: 12px; }
 
-/* Pill trạng thái kết nối */
+
 .conn {
   display: inline-flex;
   align-items: center;
@@ -114,9 +109,7 @@ body {
 body[data-theme="dark"] .ico-sun { display: none; }
 body[data-theme="light"] .ico-moon { display: none; }
 
-/* =========================================================
-   BANNER CẢNH BÁO
-   ========================================================= */
+
 .alert-banner {
   display: flex;
   align-items: center;
@@ -130,9 +123,7 @@ body[data-theme="light"] .ico-moon { display: none; }
 }
 .alert-banner svg { width: 22px; height: 22px; flex: none; }
 
-/* =========================================================
-   BỐ CỤC
-   ========================================================= */
+
 .wrap {
   max-width: 1200px;
   margin: 0 auto;
@@ -146,9 +137,7 @@ body[data-theme="light"] .ico-moon { display: none; }
   margin-bottom: 22px;
 }
 
-/* =========================================================
-   THẺ CẢM BIẾN
-   ========================================================= */
+
 .card {
   position: relative;
   overflow: hidden;
@@ -170,7 +159,7 @@ body[data-theme="light"] .ico-moon { display: none; }
 }
 .card:hover { transform: translateY(-4px); background-color: var(--surface-2); }
 
-/* Màu riêng cho từng loại cảm biến */
+
 .card.temp  { --accent: #fb7185; --accent-bg: rgba(251, 113, 133, 0.16); }
 .card.humid { --accent: #38bdf8; --accent-bg: rgba(56, 189, 248, 0.16); }
 .card.light { --accent: #fbbf24; --accent-bg: rgba(251, 191, 36, 0.16); }
@@ -189,7 +178,7 @@ body[data-theme="light"] .ico-moon { display: none; }
 }
 .card-icon svg { width: 24px; height: 24px; }
 
-/* Badge trạng thái */
+
 .badge {
   display: inline-flex;
   align-items: center;
@@ -209,7 +198,7 @@ body[data-theme="light"] .ico-moon { display: none; }
 .card-value .num { font-size: 38px; font-weight: 800; line-height: 1; }
 .card-value .unit { font-size: 15px; color: var(--muted); font-weight: 600; }
 
-/* Thanh gauge dưới mỗi thẻ */
+
 .gauge {
   margin-top: 16px;
   height: 7px;
@@ -230,9 +219,7 @@ body[data-theme="light"] .ico-moon { display: none; }
 .card-trend.up { color: #ef4444; }
 .card-trend.down { color: #22c55e; }
 
-/* =========================================================
-   PANEL (biểu đồ + bảng)
-   ========================================================= */
+
 .grid-2 { display: grid; grid-template-columns: 1.4fr 1fr; gap: 18px; }
 @media (max-width: 920px) {
   .grid-2 { grid-template-columns: 1fr; }
@@ -255,9 +242,7 @@ body[data-theme="light"] .ico-moon { display: none; }
 .chart-legend .lg { display: inline-flex; align-items: center; gap: 6px; }
 .chart-legend .lg::before { content: ""; width: 12px; height: 4px; border-radius: 2px; background-color: var(--c); }
 
-/* =========================================================
-   BẢNG
-   ========================================================= */
+
 .table-wrap { overflow-x: auto; }
 .data-table { width: 100%; border-collapse: collapse; font-size: 14px; }
 .data-table th {
@@ -277,9 +262,7 @@ body[data-theme="light"] .ico-moon { display: none; }
 .t-value { font-weight: 700; }
 .t-value .unit { color: var(--muted); font-weight: 500; font-size: 12.5px; margin-left: 3px; }
 
-/* =========================================================
-   FOOTER + CÔNG TẮC
-   ========================================================= */
+
 .foot {
   display: flex;
   align-items: center;
@@ -326,9 +309,7 @@ body[data-theme="light"] .ico-moon { display: none; }
   100% { color: inherit; }
 }
 
-/* =========================================================
-   ĐIỀU CHỈNH NGƯỠNG CẢNH BÁO
-   ========================================================= */
+
 .control-panel { margin-bottom: 22px; }
 .control-grid {
   display: grid;
@@ -388,9 +369,7 @@ body[data-theme="light"] .ico-moon { display: none; }
 }
 
 
-/* =========================================================
-   ĐIỀU KHIỂN LED TRẮNG
-   ========================================================= */
+
 .led-panel { margin-bottom: 22px; }
 .led-control-row {
   display: flex;
@@ -452,7 +431,7 @@ body[data-theme="light"] .ico-moon { display: none; }
   font-weight: 800;
 }
 
-/* Cảnh báo riêng trên từng ô cảm biến */
+
 .card.card-warn {
   border-color: rgba(245, 158, 11, 0.75);
   box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.25), var(--shadow);

@@ -14,7 +14,7 @@ String firebaseURL = "https://smartparking-d39a7-default-rtdb.asia-southeast1.fi
 #define DHTPIN 12
 #define DHTTYPE DHT22
 #define MQ_AOUT 34
-#define LDR_AO 32   // FIX: đổi từ GPIO26 (ADC2, xung đột WiFi) sang GPIO32 (ADC1)
+#define LDR_AO 32   
 #define LDR_DO 25
 #define OLED_SDA 18
 #define OLED_SCL 5
@@ -43,12 +43,10 @@ unsigned long lastFirebase = 0;
 unsigned long lastOled = 0;
 long nodeTime = 0;
 
-// ====== FIX: mốc thời gian đọc từng cảm biến (đơn vị micros, để tính latency theo ms) ======
 unsigned long gasReadMicros = 0;
 unsigned long lightReadMicros = 0;
 unsigned long dhtReadMicros = 0;
 
-// Latency từng cảm biến tính tại thời điểm đóng gói JSON (ms), để gửi kèm lên Firebase
 float gasLatencyMs = 0;
 float lightLatencyMs = 0;
 float dhtLatencyMs = 0;
@@ -58,7 +56,6 @@ const unsigned long CONTROL_TIME = 1500;
 const unsigned long FIREBASE_TIME = 1000;
 const unsigned long OLED_TIME = 1000;
 
-// Offset giờ VN, chỉ dùng để hiển thị OLED/Serial, KHÔNG dùng khi tính t1 gửi server
 const long GMT_OFFSET_SEC_DISPLAY = 7 * 3600;
 
 void stepMotor(int steps, bool dir) {
@@ -106,27 +103,22 @@ void readControl() {
 void sendSensor() {
   if (WiFi.status() != WL_CONNECTED) return;
 
-  // Tính latency từng cảm biến
   unsigned long packMicros = micros();
   gasLatencyMs   = (packMicros - gasReadMicros)   / 1000.0;
   lightLatencyMs = (packMicros - lightReadMicros) / 1000.0;
   dhtLatencyMs   = (packMicros - dhtReadMicros)   / 1000.0;
 
-  // ====== BẢN SỬA LỖI: Chỉ cần lấy trực tiếp UTC Epoch Time ======
   struct timeval tv;
   gettimeofday(&tv, NULL);
-  // gettimeofday() tự động trả về UTC, không cần trừ đi múi giờ (GMT+7) nữa
   long long thoi_gian_gui_ms_utc = (tv.tv_sec * 1000LL) + (tv.tv_usec / 1000);
 
   char timeStr[24];
   sprintf(timeStr, "%llu", (unsigned long long)thoi_gian_gui_ms_utc);
-  // ===============================================================
 
   HTTPClient http;
   http.begin(firebaseURL + "sensor.json");
   http.addHeader("Content-Type", "application/json");
 
-  // Đóng gói chuỗi JSON
   String data = "{";
   data += "\"temperature\":" + String(temp) + ",";
   data += "\"humidity\":" + String(hum) + ",";
@@ -154,10 +146,10 @@ void sendSensor() {
 
 void updateSensor() {
   gasValue = analogRead(MQ_AOUT);
-  gasReadMicros = micros();          // FIX: chốt mốc thời gian ngay sau khi đọc xong gas
+  gasReadMicros = micros();          
 
   lightValue = analogRead(LDR_AO);
-  lightReadMicros = micros();        // FIX: chốt mốc thời gian ngay sau khi đọc xong light
+  lightReadMicros = micros();     
 
   lightDigital = digitalRead(LDR_DO);
 }
@@ -165,7 +157,7 @@ void updateSensor() {
 void updateDHT() {
   float t = dht.readTemperature();
   float h = dht.readHumidity();
-  dhtReadMicros = micros();          // FIX: chốt mốc thời gian ngay sau khi đọc xong DHT
+  dhtReadMicros = micros();        
 
   if (!isnan(t) && !isnan(h)) {
     temp = t;
@@ -280,8 +272,6 @@ void setup() {
     Serial.print(".");
   }
 
-  // configTime vẫn dùng để hiển thị giờ VN trên OLED/Serial nếu cần;
-  // sendSensor() đã tự trừ lại offset này để đưa t1 về đúng UTC.
   configTime(GMT_OFFSET_SEC_DISPLAY, 0, "pool.ntp.org", "time.nist.gov");
   Serial.print("\nDang dong bo thoi gian NTP");
   while (time(nullptr) < 100000) {
@@ -312,9 +302,6 @@ void loop() {
     updateDHT();
   }
 
-  // FIX: chốt nodeTime và gửi sensor NGAY SAU khi đọc cảm biến,
-  // TRƯỚC khi gọi readControl() — vì readControl() là HTTP GET (blocking),
-  // nếu đặt trước sendSensor() nó sẽ làm "phình" sai latency của mọi cảm biến.
   nodeTime = millis() - startNode;
 
   if (now - lastFirebase >= FIREBASE_TIME) {
@@ -322,8 +309,6 @@ void loop() {
     sendSensor();
   }
 
-  // readControl() (HTTP GET, có thể block vài giây nếu mạng chậm) chạy SAU CÙNG,
-  // không còn nằm giữa lúc đọc cảm biến và lúc đóng gói/gửi JSON nữa.
   if (now - lastControl >= CONTROL_TIME) {
     lastControl = now;
     readControl();

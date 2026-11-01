@@ -8,7 +8,6 @@
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body data-theme="dark">
-
   <header class="topbar">
     <div class="brand">
       <span class="brand-logo">
@@ -35,9 +34,9 @@
   </header>
 
   <main class="wrap">
-
     <section class="cards">
 
+      <!-- Thẻ hiển thị Nhiệt độ -->
       <article class="card temp">
         <div class="card-top">
           <span class="card-icon">
@@ -51,6 +50,7 @@
         <div class="card-meta"><span>0 – 50 °C</span><span class="card-trend" id="trend_nhietDo"></span></div>
       </article>
 
+      <!-- Thẻ hiển thị Độ ẩm -->
       <article class="card humid">
         <div class="card-top">
           <span class="card-icon">
@@ -64,6 +64,7 @@
         <div class="card-meta"><span>0 – 100 %</span><span class="card-trend" id="trend_doAm"></span></div>
       </article>
 
+      <!-- Thẻ hiển thị Ánh sáng -->
       <article class="card light">
         <div class="card-top">
           <span class="card-icon">
@@ -77,6 +78,7 @@
         <div class="card-meta"><span>0 – 1000 lux</span><span class="card-trend" id="trend_anhSang"></span></div>
       </article>
 
+      <!-- Thẻ hiển thị khí gas -->
       <article class="card gas">
         <div class="card-top">
           <span class="card-icon">
@@ -92,6 +94,7 @@
 
     </section>
 
+    <!-- Panel điều chỉnh ngưỡng cảnh báo -->
     <section class="panel control-panel">
       <div class="panel-head">
         <h2>Điều chỉnh ngưỡng cảnh báo</h2>
@@ -117,6 +120,7 @@
       <p class="control-message" id="controlMessage">Nhập ngưỡng mới rồi bấm cập nhật.</p>
     </section>
 
+    <!-- Panel điều khiển LED trắng thủ công -->
     <section class="panel led-panel">
       <div class="panel-head">
         <h2>Điều khiển LED trắng</h2>
@@ -140,6 +144,7 @@
       <p class="control-message" id="ledControlMessage">Công tắc này không tắt chế độ tự động theo ánh sáng.</p>
     </section>
 
+    <!-- Panel hiển thị latency và timestamp hệ thống -->
     <section class="panel">
       <div class="panel-head">
         <h2>⏱️ Phân tích Độ trễ Hệ thống (System Latency)</h2>
@@ -166,6 +171,7 @@
       </div>
     </section>
 
+    <!-- Lưới hai cột: biểu đồ thời gian và bảng tham số -->
     <div class="grid-2">
 
       <section class="panel">
