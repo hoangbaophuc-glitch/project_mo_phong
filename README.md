@@ -3,7 +3,7 @@
 This project is an IoT simulation built with ESP32, designed to monitor environmental parameters (temperature, gas, light) and automatically trigger safety protocols such as opening a ventilation door when dangerous thresholds are exceeded. It synchronizes real-time data and remote control commands via Firebase.
 
 ## 🔌 Circuit Diagram
-![System Architecture](image_d5b49d.png)
+![System Architecture](Sodochan.png)
 
 ## 🛠 Hardware Components
 - **Microcontroller:** ESP32 DevKit V4
